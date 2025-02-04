@@ -1,0 +1,71 @@
+1. parse some xml and create playback with their 
+speech engine 
+2. design system questions 
+3. compare two node trees with some additional 
+tasks like making them equal 
+and updating as few as possible nodes
+
+import xml.etree.ElementTree as ET
+
+def compare_trees(tree1, tree2):
+    """Recursively compares two XML trees and returns differences."""
+    diffs = []
+    if tree1.tag != tree2.tag:
+        diffs.append(f"Different tag: {tree1.tag} -> {tree2.tag}")
+
+    if tree1.text.strip() != tree2.text.strip():
+        diffs.append(f"Different text in {tree1.tag}: '{tree1.text}' -> '{tree2.text}'")
+
+    for c1, c2 in zip(tree1, tree2):
+        diffs.extend(compare_trees(c1, c2))
+
+    return diffs
+
+# Example XML Trees
+xml_a = "<root><name>John</name><age>30</age></root>"
+xml_b = "<root><name>Jane</name><age>31</age></root>"
+
+tree_a = ET.fromstring(xml_a)
+tree_b = ET.fromstring(xml_b)
+
+differences = compare_trees(tree_a, tree_b)
+print(differences)
+----------
+
+
+import xml.etree.ElementTree as ET
+from pydub import AudioSegment
+import pyttsx3
+
+def parse_ssml(ssml_text):
+    """Extracts text and metadata from SSML."""
+    root = ET.fromstring(f"<root>{ssml_text}</root>")  # Wrapping for valid XML
+    parsed_data = {"text": "", "instructions": []}
+
+    for elem in root.iter():
+        if elem.tag == "prosody":
+            parsed_data["instructions"].append(f"Prosody: {elem.attrib}")
+        elif elem.tag == "break":
+            parsed_data["instructions"].append(f"Pause: {elem.attrib.get('time', 'default')}")
+        elif elem.tag == "emphasis":
+            parsed_data["instructions"].append(f"Emphasis: {elem.text.strip()}")
+        else:
+            parsed_data["text"] += (elem.text or "") + " "
+
+    return parsed_data
+
+def text_to_speech(text):
+    """Uses pyttsx3 to generate speech playback."""
+    engine = pyttsx3.init()
+    engine.say(text)
+    engine.runAndWait()
+
+# Example SSML
+ssml_input = """
+<prosody rate="slow">Hello</prosody>, welcome to Speechify!
+<break time="500ms"/> Let's start <emphasis>reading</emphasis> this document.
+"""
+
+parsed = parse_ssml(ssml_input)
+print(parsed)
+text_to_speech(parsed["text"])

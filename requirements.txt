@@ -1,0 +1,4 @@
+lxml
+gTTS
+playsound  
+pydub       
